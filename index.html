@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AquaSolve — Water Jug Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+  <!-- ── Ambient background ── -->
+  <div class="bg-canvas" aria-hidden="true">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- ══════ HEADER ══════ -->
+  <header class="hdr">
+    <div class="hdr-inner">
+      <div class="brand">
+        <div class="brand-drop">
+          <svg viewBox="0 0 36 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 2C18 2 4 18 4 26a14 14 0 0 0 28 0C32 18 18 2 18 2z" fill="url(#dg1)" opacity=".9"/>
+            <path d="M18 14C18 14 10 23 10 27a8 8 0 0 0 16 0C26 23 18 14 18 14z" fill="url(#dg2)" opacity=".5"/>
+            <defs>
+              <linearGradient id="dg1" x1="4" y1="2" x2="32" y2="42" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#a5f3fc"/>
+                <stop offset="100%" stop-color="#0284c7"/>
+              </linearGradient>
+              <linearGradient id="dg2" x1="10" y1="14" x2="26" y2="36" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity=".8"/>
+                <stop offset="100%" stop-color="#bae6fd" stop-opacity=".1"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">AquaSolve</div>
+          <div class="brand-sub">Water Jug Problem · BFS Algorithm</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="live-badge" id="liveBadge">
+          <span class="live-dot"></span> Ready
+        </div>
+        <button class="icon-btn" id="themeBtn" title="Toggle theme">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════ APP BODY ══════ -->
+  <main class="app-grid">
+
+    <!-- ═══ LEFT: CONFIG ═══ -->
+    <aside class="glass-card config-card">
+      <div class="card-title"><span>⚙️</span> Setup</div>
+
+      <div class="input-field">
+        <label><span class="lbl-dot" style="background:#38bdf8"></span>Jug A Capacity</label>
+        <div class="inp-row">
+          <input type="number" id="jug1Cap" min="1" max="99" value="4" placeholder="4"/>
+          <span class="inp-unit">L</span>
+        </div>
+      </div>
+
+      <div class="input-field">
+        <label><span class="lbl-dot" style="background:#818cf8"></span>Jug B Capacity</label>
+        <div class="inp-row">
+          <input type="number" id="jug2Cap" min="1" max="99" value="3" placeholder="3"/>
+          <span class="inp-unit">L</span>
+        </div>
+      </div>
+
+      <div class="input-field">
+        <label><span class="lbl-dot" style="background:#fb923c"></span>Target Amount</label>
+        <div class="inp-row">
+          <input type="number" id="target" min="1" max="99" value="2" placeholder="2"/>
+          <span class="inp-unit">L</span>
+        </div>
+      </div>
+
+      <div class="err-card hidden" id="errCard">
+        <span>⚠️</span><span id="errText"></span>
+      </div>
+
+      <button class="cta-btn" id="startBtn">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="16"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+        Solve &amp; Simulate
+      </button>
+      <button class="ghost-btn" id="resetBtn">↺ Reset Everything</button>
+
+      <!-- Speed -->
+      <div class="speed-block">
+        <div class="speed-top">
+          <span>⚡ Speed</span>
+          <span class="speed-badge" id="speedLabel">1.0×</span>
+        </div>
+        <input type="range" id="speedSlider" min="200" max="2500" step="100" value="1100"/>
+        <div class="speed-ends"><span>Fast</span><span>Slow</span></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-val" id="totalSteps">—</div>
+          <div class="stat-key">Total Steps</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="currentStepDisp">—</div>
+          <div class="stat-key">Current</div>
+        </div>
+      </div>
+      <div class="stat-wide">
+        <span class="stat-key">Status&nbsp;</span>
+        <span class="stat-val" id="statusDisp">—</span>
+      </div>
+
+      <!-- Keyboard hints -->
+      <div class="kbd-row">
+        <span class="kbd">← →</span> Steps &nbsp;
+        <span class="kbd">Space</span> Play &nbsp;
+        <span class="kbd">R</span> Reset
+      </div>
+    </aside>
+
+    <!-- ═══ CENTER: SIMULATION ═══ -->
+    <section class="glass-card sim-card">
+      <div class="sim-topbar">
+        <div class="card-title" style="margin-bottom:0"><span>🧪</span> Live Simulation</div>
+        <div class="state-pill" id="statePill">( — , — )</div>
+        <div class="goal-pill" id="goalPill">🎯 Target: <strong id="goalAmt">—</strong> L</div>
+      </div>
+
+      <!-- ─── JUGS STAGE ─── -->
+      <div class="jugs-stage">
+
+        <!-- JUG A wrapper -->
+        <div class="jug-col" id="colA">
+          <div class="jug-name-row">
+            <span class="jug-tag tagA">JUG A</span>
+            <span class="jug-reading" id="readA">0 / 0 L</span>
+          </div>
+
+          <div class="jug-scene" id="sceneA">
+            <!-- outer glass body -->
+            <div class="glass-jug" id="gjugA">
+              <div class="jug-shine"></div>
+              <!-- ruler ticks -->
+              <div class="tick-marks" id="tickA"></div>
+              <!-- water -->
+              <div class="water-body" id="wbA">
+                <div class="water-gloss"></div>
+                <svg class="wave-svg" viewBox="0 0 120 16" preserveAspectRatio="none">
+                  <path id="waveA" d="M0,8 C30,2 60,14 90,8 C105,5 115,11 120,8 L120,16 L0,16 Z" fill="rgba(255,255,255,0.25)"/>
+                </svg>
+                <div class="bubble-field" id="bubA"></div>
+              </div>
+              <div class="splash-ring" id="splA"></div>
+            </div>
+            <div class="jug-spout spout-right" id="spoutA"></div>
+            <div class="jug-base-plate"></div>
+          </div>
+
+          <div class="jug-footer-row">
+            <span class="cap-label" id="capA">Cap: — L</span>
+            <div class="mini-bar-wrap"><div class="mini-bar" id="miniA"></div></div>
+          </div>
+        </div>
+
+        <!-- POUR CHANNEL -->
+        <div class="pour-mid" id="pourMid">
+          <div class="flow-pipe" id="flowPipe">
+            <div class="flow-liquid" id="flowLiq"></div>
+          </div>
+          <div class="flow-label" id="flowLabel"></div>
+          <div class="drip-zone">
+            <div class="drip" id="drip1"></div>
+            <div class="drip" id="drip2"></div>
+            <div class="drip" id="drip3"></div>
+          </div>
+        </div>
+
+        <!-- JUG B wrapper -->
+        <div class="jug-col" id="colB">
+          <div class="jug-name-row">
+            <span class="jug-tag tagB">JUG B</span>
+            <span class="jug-reading" id="readB">0 / 0 L</span>
+          </div>
+
+          <div class="jug-scene" id="sceneB">
+            <div class="glass-jug" id="gjugB">
+              <div class="jug-shine"></div>
+              <div class="tick-marks" id="tickB"></div>
+              <div class="water-body" id="wbB">
+                <div class="water-gloss"></div>
+                <svg class="wave-svg" viewBox="0 0 120 16" preserveAspectRatio="none">
+                  <path id="waveB" d="M0,8 C30,2 60,14 90,8 C105,5 115,11 120,8 L120,16 L0,16 Z" fill="rgba(255,255,255,0.25)"/>
+                </svg>
+                <div class="bubble-field" id="bubB"></div>
+              </div>
+              <div class="splash-ring" id="splB"></div>
+            </div>
+            <div class="jug-spout spout-left" id="spoutB"></div>
+            <div class="jug-base-plate"></div>
+          </div>
+
+          <div class="jug-footer-row">
+            <span class="cap-label" id="capB">Cap: — L</span>
+            <div class="mini-bar-wrap"><div class="mini-bar" id="miniB"></div></div>
+          </div>
+        </div>
+      </div><!-- /jugs-stage -->
+
+      <!-- ─── EXPLANATION CARD ─── -->
+      <div class="explain-glass" id="explainCard">
+        <div class="explain-badge" id="explainBadge">
+          <span id="explainIcon">💧</span>
+          <span id="explainStep">Step 0</span>
+        </div>
+        <div class="explain-main">
+          <div class="explain-action" id="explainAction">Configure &amp; start the simulation</div>
+          <div class="explain-detail" id="explainDetail">Set jug capacities and a target amount, then press <strong>Solve &amp; Simulate</strong> to watch the BFS algorithm find the optimal solution.</div>
+          <div class="explain-why" id="explainWhy"></div>
+        </div>
+        <div class="explain-transition" id="explainTransition">
+          <div class="trans-chip">
+            <div class="trans-lbl">Before</div>
+            <div class="trans-val" id="transBefore">—</div>
+          </div>
+          <div class="trans-arrow">⟶</div>
+          <div class="trans-chip trans-after">
+            <div class="trans-lbl">After</div>
+            <div class="trans-val" id="transAfter">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory banner -->
+      <div class="victory-banner hidden" id="victoryBanner">
+        <div class="victory-glow"></div>
+        <span class="v-icon">🏆</span>
+        <div class="v-text">
+          <strong>Problem Solved!</strong>
+          <span id="victorySub">Target achieved via BFS</span>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <div class="nav-strip">
+        <button class="nav-btn" id="prevBtn" disabled>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="14"><path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg>
+          Prev
+        </button>
+        <button class="nav-btn play-btn" id="autoBtn" disabled>
+          <span id="playIconWrap">▶</span>
+          <span id="autoBtnLbl">Auto Play</span>
+        </button>
+        <button class="nav-btn" id="nextBtn" disabled>
+          Next
+          <svg viewBox="0 0 20 20" fill="currentColor" width="14"><path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ═══ RIGHT: HISTORY + BFS ═══ -->
+    <aside class="glass-card right-card">
+
+      <div class="card-title"><span>🔬</span> BFS Trace</div>
+      <div class="bfs-trace">
+        <div class="bfs-pair">
+          <div class="bfs-cell">
+            <div class="bfs-lbl">Current State</div>
+            <code id="bfsCur">—</code>
+          </div>
+          <div class="bfs-arrow-big">→</div>
+          <div class="bfs-cell">
+            <div class="bfs-lbl">Next State</div>
+            <code id="bfsNxt">—</code>
+          </div>
+        </div>
+        <div class="bfs-queue-wrap">
+          <div class="bfs-lbl">Queue Preview</div>
+          <div class="bfs-q-chips" id="bfsQChips"></div>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:20px"><span>📋</span> Step History</div>
+      <div class="history-list" id="historyList">
+        <div class="hist-empty">
+          <div style="font-size:2rem">🌊</div>
+          <p>No simulation yet.<br/>Run a solve to see full step history.</p>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <footer class="app-foot">
+    AquaSolve · Breadth-First Search · Water Jug Problem Interactive Visualizer
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
